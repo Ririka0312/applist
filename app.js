@@ -22,3 +22,22 @@ app.get("/api/flashcards",async(req,res)=>{
 
 
 ///api/flashcards に POSTリクエストが来たら "flashcards.json" に追加し、追加したデータを返す
+app.post("/api/flashcards", async (req, res) => {
+  const flashcardsJsonPath = path.join(__dirname, "data", "flashcards.json");
+  const data = await readFile(flashcardsJsonPath);
+  const flashcardsList = JSON.parse(data);
+  const newWord = req.body;
+
+  if (!newWord.id) {
+    newWord.id = Date.now();
+  }
+
+  flashcardsList.push(newWord);
+
+  await writeFile(
+    flashcardsJsonPath,
+    JSON.stringify(flashcardsList, null, 2)
+  );
+
+  res.status(201).json(newWord);
+});

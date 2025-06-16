@@ -9,30 +9,27 @@ async function fetchFlashcards() {
   }
 }
 
-// 暗記カードを追加するデータをサーバーに送る関数を作成してください
-function showModal() {
-    wordModal.classList.remove("hidden");
-    document.getElementById("word-input").focus();
+async function createFlashcardData(wordData) {
+  try{
+    const url = "/api/flashcards";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(wordData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
 }
-
-function hideModal() {
-    wordModal.classList.add("hidden");
-    wordForm.reset();
-}
-
-
 
 export async function setupFlashcards() {
   const flashcardsList = document.getElementById("flashcards-list");
-  function toggleMeaning(id) {
-    const meaningElement = document.querySelector(`[data-meaning="${id}"]`);
-
-    if (meaningElement.classList.contains("hidden")) {
-      meaningElement.classList.remove("hidden");
-    } else {
-      meaningElement.classList.add("hidden");
-    }
-  }
+  const addWordBtn = document.querySelector(".add-word");
+  const wordModal = document.getElementById("word-modal");
+  const wordForm = document.getElementById("word-form");
+  const cancelBtn = document.querySelector(".cancel-word");
 
   async function readFlashcards() {
     const wordList = await fetchFlashcards();
@@ -61,6 +58,50 @@ export async function setupFlashcards() {
     });
   }
 
+  function toggleMeaning(id) {
+    const meaningElement = document.querySelector(`[data-meaning="${id}"]`);
+
+    if (meaningElement.classList.contains("hidden")) {
+      meaningElement.classList.remove("hidden");
+    } else {
+      meaningElement.classList.add("hidden");
+    }
+  }
+  
+  function showModal() {
+    wordModal.classList.remove("hidden");
+    document.getElementById("word-input").focus();
+  }
+
+  function hideModal() {
+    wordModal.classList.add("hidden");
+    wordForm.reset();
+  }
+  
+  async function save(event) {
+    event.preventDefault();
+
+    const wordInput = document.getElementById("word-input").value;
+    const meaningInput = document.getElementById("meaning-input").value;
+
+    const word = {
+      id: Date.now(),
+      word: wordInput.trim(),
+      meaning: meaningInput.trim(),
+    };
+    await createFlashcardData(word);
+    await readFlashcards();
+    hideModal();
+  }
+  
+  addWordBtn.addEventListener("click", showModal);
+  cancelBtn.addEventListener("click", hideModal);
+  wordForm.addEventListener("submit", save);
+  wordModal.addEventListener("click", (event) => {
+    if (event.target === wordModal) {
+      hideModal();
+    }
+  });
 
   flashcardsList.addEventListener("click", event => {
     const btn = event.target.closest(".flashcard-meaning");
